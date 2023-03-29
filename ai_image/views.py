@@ -153,3 +153,16 @@ def image_upload(request):
             return render(request, 'image_upload.html', {'form': form, 'img_obj': new_image_url})
     else:
         return render(request, 'image_upload.html')
+
+
+
+###########
+"""
+echo "# AI_IMAGE_EDITOR" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/sammathur4/AI_IMAGE_EDITOR.git
+git push -u origin main
+"""
