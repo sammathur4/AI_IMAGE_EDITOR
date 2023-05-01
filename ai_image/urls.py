@@ -1,6 +1,10 @@
 from django.urls import path
-from .views import image_upload
+from .views import *
 
 urlpatterns = [
     path('remove_background/', image_upload, name='image_upload'),
 ]
+
+
+
+
