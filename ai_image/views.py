@@ -13,8 +13,6 @@ def image_upload(request):
         form = ImageUploadForm(request.POST, request.FILES)
         if form.is_valid():
             uploaded_file = request.FILES['image']
-            # print("request.FILES['image']", request.FILES['image'])
-
             # Generate a random filename with a prefix and the original extension
             letters = string.ascii_letters
             prefix = "".join(random.sample(letters, 5))
@@ -46,94 +44,95 @@ def image_upload(request):
             new_image_url = new_image.image.url
 
             return render(request, 'image_upload.html', {'form': form, 'img_obj': new_image_url})
+
     else:
         return render(request, 'image_upload.html')
 
 
-import stripe
-from django.shortcuts import render, redirect
-from django.urls import reverse
-from django.conf import settings
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from googleapiclient.errors import HttpError
-from googleapiclient.discovery import build
-
-stripe.api_key = settings.STRIPE_SECRET_KEY
-GOOGLE_PAY_API_VERSION = 2
-
-
-def checkout(request):
-    if request.method == 'POST':
-        # Retrieve the token from the POST request
-        stripe_token = request.POST.get('stripeToken')
-
-        # Create a Stripe charge with the token
-        charge = stripe.Charge.create(
-            amount=1000,  # Amount in cents
-            currency='usd',
-            description='Example charge',
-            source=stripe_token
-        )
-
-        # Redirect to a success page if the charge was successful
-        if charge.paid:
-            return redirect(reverse('success'))
-
-    # Render the checkout page
-    return render(request, 'checkout.html', {
-        'publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
-        'google_pay_merchant_id': settings.GOOGLE_PAY_MERCHANT_ID,
-    })
-
-
-def google_pay(request):
-    # Build the Google Pay API client
-    credentials = Credentials.from_authorized_user_info(info=request.user.auth_token)
-    service = build('payments', 'v1', credentials=credentials)
-
-    # Create a new payment request
-    payment_request = {
-        'apiVersion': GOOGLE_PAY_API_VERSION,
-        'apiVersionMinor': 0,
-        'allowedPaymentMethods': [{
-            'type': 'CARD',
-            'parameters': {
-                'allowedAuthMethods': ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-                'allowedCardNetworks': ['AMEX', 'DISCOVER', 'JCB', 'MASTERCARD', 'VISA'],
-            },
-            'tokenizationSpecification': {
-                'type': 'PAYMENT_GATEWAY',
-                'parameters': {
-                    'gateway': 'stripe',
-                    'stripe:version': '2020-08-27',
-                    'stripe:publishableKey': settings.STRIPE_PUBLISHABLE_KEY,
-                },
-            },
-        }],
-        'transactionInfo': {
-            'totalPrice': '10.00',
-            'currencyCode': 'USD',
-            'countryCode': 'US',
-            'checkoutOption': 'COMPLETE_IMMEDIATE_PURCHASE',
-        },
-        'merchantInfo': {
-            'merchantName': 'Example Merchant',
-            'merchantId': settings.GOOGLE_PAY_MERCHANT_ID,
-        },
-    }
-
-    # Send the payment request to Google Pay
-    try:
-        payment_response = service.payments().create(body=payment_request).execute()
-    except HttpError as error:
-        print(f"An error occurred: {error}")
-        payment_response = None
-
-    # Render the payment response
-    return render(request, 'google_pay.html', {
-        'payment_response': payment_response,
-    })
+# import stripe
+# from django.shortcuts import render, redirect
+# from django.urls import reverse
+# from django.conf import settings
+# from google.auth.transport.requests import Request
+# from google.oauth2.credentials import Credentials
+# from googleapiclient.errors import HttpError
+# from googleapiclient.discovery import build
+#
+# stripe.api_key = settings.STRIPE_SECRET_KEY
+# GOOGLE_PAY_API_VERSION = 2
+#
+#
+# def checkout(request):
+#     if request.method == 'POST':
+#         # Retrieve the token from the POST request
+#         stripe_token = request.POST.get('stripeToken')
+#
+#         # Create a Stripe charge with the token
+#         charge = stripe.Charge.create(
+#             amount=1000,  # Amount in cents
+#             currency='usd',
+#             description='Example charge',
+#             source=stripe_token
+#         )
+#
+#         # Redirect to a success page if the charge was successful
+#         if charge.paid:
+#             return redirect(reverse('success'))
+#
+#     # Render the checkout page
+#     return render(request, 'checkout.html', {
+#         'publishable_key': settings.STRIPE_PUBLISHABLE_KEY,
+#         'google_pay_merchant_id': settings.GOOGLE_PAY_MERCHANT_ID,
+#     })
+#
+#
+# def google_pay(request):
+#     # Build the Google Pay API client
+#     credentials = Credentials.from_authorized_user_info(info=request.user.auth_token)
+#     service = build('payments', 'v1', credentials=credentials)
+#
+#     # Create a new payment request
+#     payment_request = {
+#         'apiVersion': GOOGLE_PAY_API_VERSION,
+#         'apiVersionMinor': 0,
+#         'allowedPaymentMethods': [{
+#             'type': 'CARD',
+#             'parameters': {
+#                 'allowedAuthMethods': ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
+#                 'allowedCardNetworks': ['AMEX', 'DISCOVER', 'JCB', 'MASTERCARD', 'VISA'],
+#             },
+#             'tokenizationSpecification': {
+#                 'type': 'PAYMENT_GATEWAY',
+#                 'parameters': {
+#                     'gateway': 'stripe',
+#                     'stripe:version': '2020-08-27',
+#                     'stripe:publishableKey': settings.STRIPE_PUBLISHABLE_KEY,
+#                 },
+#             },
+#         }],
+#         'transactionInfo': {
+#             'totalPrice': '10.00',
+#             'currencyCode': 'USD',
+#             'countryCode': 'US',
+#             'checkoutOption': 'COMPLETE_IMMEDIATE_PURCHASE',
+#         },
+#         'merchantInfo': {
+#             'merchantName': 'Example Merchant',
+#             'merchantId': settings.GOOGLE_PAY_MERCHANT_ID,
+#         },
+#     }
+#
+#     # Send the payment request to Google Pay
+#     try:
+#         payment_response = service.payments().create(body=payment_request).execute()
+#     except HttpError as error:
+#         print(f"An error occurred: {error}")
+#         payment_response = None
+#
+#     # Render the payment response
+#     return render(request, 'google_pay.html', {
+#         'payment_response': payment_response,
+#     })
 
 # def convert_image_format(request):
 #     if request.method == 'POST':
